@@ -5,7 +5,7 @@ async function safetyChecker(x) {
         await delay(2000);
 
         let url = x;
-        let security_key = "Muneeb2002";
+        let security_key = "True";
 
         const response = await fetch(`https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`);
 
