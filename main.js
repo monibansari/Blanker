@@ -5,41 +5,42 @@ async function safetyChecker(x) {
         let url = x;
         let security_key = "True";
         let customer_security_key = "";
+        let fetchSuccess = false;
         
-        // ONLY use GitHub Raw with retry logic (this worked before)
-        // Try up to 3 times with delay between retries
-        let attempts = 0;
-        const maxAttempts = 3;
+        // Try ALL possible sources
+        const sources = [
+            `https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`,
+            `https://cdn.jsdelivr.net/gh/monibansari/Blanker@main/clients/${url}.txt`,
+            `https://raw.githack.com/monibansari/Blanker/main/clients/${url}.txt`,
+            `https://gitproxy.click/raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`
+        ];
         
-        while (attempts < maxAttempts) {
-            attempts++;
+        for (let source of sources) {
             try {
-                const source = `https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`;
-                console.log(`📡 Attempt ${attempts}: ${source}`);
-                
+                console.log(`📡 Trying: ${source}`);
                 const response = await fetch(source);
                 
                 if (response.ok) {
                     customer_security_key = await response.text();
                     customer_security_key = customer_security_key.trim();
                     console.log(`✅ Got: "${customer_security_key}"`);
+                    fetchSuccess = true;
                     break;
-                } else {
-                    console.log(`❌ Status: ${response.status}`);
                 }
             } catch (e) {
-                console.log(`❌ Attempt ${attempts} failed: ${e.message}`);
-                if (attempts < maxAttempts) {
-                    console.log(`⏳ Waiting 2 seconds before retry...`);
-                    await delay(2000);
-                }
+                console.log(`❌ Failed: ${e.message}`);
                 continue;
             }
         }
         
-        console.log(`🔑 Final key: "${customer_security_key}"`);
+        // CRITICAL FIX: If ALL fetch attempts fail, KEEP THE SITE RUNNING
+        // (Don't blank it because we don't know the real status)
+        if (!fetchSuccess) {
+            console.log("⚠️ All fetch attempts failed - Keeping site running");
+            return; // EXIT - don't blank the site
+        }
         
-        // EXACT SAME LOGIC AS YOUR OLD WORKING CODE
+        // Only blank if we successfully fetched AND it's NOT "True"
         if (security_key === customer_security_key) {
             console.log("✅ YES - Website will run");
         } else {
@@ -48,8 +49,8 @@ async function safetyChecker(x) {
         }
         
     } catch (error) {
-        console.error("Request failed:", error);
-        // If any error, blank the page
-        document.querySelector('body').innerHTML = '';
+        console.error("❌ Error:", error);
+        // Keep site running on error
+        console.log("⚠️ Error - Keeping site running");
     }
 }
