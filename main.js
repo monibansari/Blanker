@@ -7,63 +7,87 @@ async function safetyChecker(x) {
         let customer_security_key = "";
         let fetchSuccess = false;
         
+        console.log(`🔍 Checking security for: ${url}`);
+        
         // Try multiple sources
         const sources = [
+            `https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt?t=${Date.now()}`,
             `https://cdn.jsdelivr.net/gh/monibansari/Blanker@main/clients/${url}.txt?t=${Date.now()}`,
-            `https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt?t=${Date.now()}`
+            `https://raw.githack.com/monibansari/Blanker/main/clients/${url}.txt?t=${Date.now()}`
         ];
         
         for (let source of sources) {
             try {
+                console.log(`📡 Trying: ${source}`);
                 const response = await fetch(source, {
-                    cache: 'no-cache'
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
                 });
+                
                 if (response.ok) {
                     customer_security_key = await response.text();
                     customer_security_key = customer_security_key.trim();
-                    console.log(`✅ Fetched: "${customer_security_key}" from ${source}`);
+                    console.log(`✅ File content: "${customer_security_key}"`);
                     fetchSuccess = true;
                     break;
+                } else {
+                    console.log(`❌ Response status: ${response.status}`);
                 }
             } catch (e) {
+                console.log(`❌ Error: ${e.message}`);
                 continue;
             }
         }
         
+        // IMPORTANT: If fetch fails, we DON'T keep the site running
+        // Instead, we check - if fetch fails, we should ALSO blank the site
+        // because it means the file doesn't exist or can't be accessed
         if (!fetchSuccess) {
-            console.log("🟢 Keeping site (fetch failed)");
-            return;
-        }
-        
-        if (security_key !== customer_security_key) {
-            console.log("❌ BLANKING PAGE NOW!");
-            
-            // INSTANT BLANK - Multiple methods
+            console.log("❌ Could not fetch security file - BLANKING PAGE!");
+            // Blank the page if file can't be fetched
             try {
-                // Method 1: Clear everything
-                document.open();
-                document.write('');
-                document.close();
-                
-                // Method 2: Remove body
-                if (document.body) {
-                    document.body.remove();
-                }
-                
-                // Method 3: Replace with empty
+                document.body.innerHTML = '';
                 document.documentElement.innerHTML = '';
-                
-                // Method 4: Redirect to blank page
-                window.stop();
-                
-                console.log("💀 PAGE IS BLANK!");
+                document.body.style.display = 'none';
+                console.log("💀 Page blanked (fetch failed)");
             } catch(e) {
                 console.log("Blank error:", e);
             }
+            return;
+        }
+        
+        // Check if security key matches
+        if (security_key === customer_security_key) {
+            console.log("✅ Security PASSED - Website will run");
         } else {
-            console.log("✅ Security PASSED");
+            console.log(`❌ Security FAILED! Expected "True", got "${customer_security_key}"`);
+            console.log("💀 BLANKING PAGE NOW!");
+            
+            // Blank the page
+            try {
+                document.body.innerHTML = '';
+                document.documentElement.innerHTML = '';
+                document.body.style.display = 'none';
+                // Also try to stop any further rendering
+                window.stop();
+                console.log("💀 Page is BLANK!");
+            } catch(e) {
+                console.log("Blank error:", e);
+            }
         }
     } catch (error) {
-        console.log("🟢 Keeping site (error)");
+        console.error("❌ Request failed:", error);
+        // If there's any error, blank the page
+        console.log("❌ Error occurred - BLANKING PAGE!");
+        try {
+            document.body.innerHTML = '';
+            document.documentElement.innerHTML = '';
+            document.body.style.display = 'none';
+        } catch(e) {
+            console.log("Blank error:", e);
+        }
     }
 }
