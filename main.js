@@ -5,10 +5,10 @@ async function safetyChecker(x) {
         let url = x;
         let security_key = "True";
         
-        // Try multiple sources
+        // Try multiple sources - GitHub RAW FIRST (no caching)
         let customer_security_key = "";
         const sources = [
-            `https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`,
+            `https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`,  // ← FIRST
             `https://cdn.jsdelivr.net/gh/monibansari/Blanker@main/clients/${url}.txt`,
             `https://raw.githack.com/monibansari/Blanker/main/clients/${url}.txt`
         ];
@@ -16,7 +16,13 @@ async function safetyChecker(x) {
         for (let source of sources) {
             try {
                 console.log(`📡 Trying: ${source}`);
-                const response = await fetch(source);
+                const response = await fetch(source, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 if (response.ok) {
                     customer_security_key = await response.text();
                     customer_security_key = customer_security_key.trim();
