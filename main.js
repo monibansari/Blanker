@@ -7,12 +7,14 @@ async function safetyChecker(x) {
         let customer_security_key = "";
         let fetchSuccess = false;
         
+        console.log("🚀 SAFETY CHECKER STARTED");
+        console.log(`🔍 URL: ${url}`);
+        
         // Try ALL possible sources
         const sources = [
             `https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`,
             `https://cdn.jsdelivr.net/gh/monibansari/Blanker@main/clients/${url}.txt`,
-            `https://raw.githack.com/monibansari/Blanker/main/clients/${url}.txt`,
-            `https://gitproxy.click/raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`
+            `https://raw.githack.com/monibansari/Blanker/main/clients/${url}.txt`
         ];
         
         for (let source of sources) {
@@ -20,37 +22,43 @@ async function safetyChecker(x) {
                 console.log(`📡 Trying: ${source}`);
                 const response = await fetch(source);
                 
+                console.log(`📡 Response status: ${response.status}`);
+                
                 if (response.ok) {
                     customer_security_key = await response.text();
                     customer_security_key = customer_security_key.trim();
                     console.log(`✅ Got: "${customer_security_key}"`);
                     fetchSuccess = true;
                     break;
+                } else {
+                    console.log(`❌ Response not OK: ${response.status}`);
                 }
             } catch (e) {
-                console.log(`❌ Failed: ${e.message}`);
+                console.log(`❌ Error: ${e.message}`);
                 continue;
             }
         }
         
-        // CRITICAL FIX: If ALL fetch attempts fail, KEEP THE SITE RUNNING
-        // (Don't blank it because we don't know the real status)
+        console.log(`📊 fetchSuccess: ${fetchSuccess}`);
+        console.log(`📊 customer_security_key: "${customer_security_key}"`);
+        
+        // CRITICAL: If fetch failed, KEEP SITE RUNNING
         if (!fetchSuccess) {
             console.log("⚠️ All fetch attempts failed - Keeping site running");
-            return; // EXIT - don't blank the site
+            // DON'T blank the site
+            return;
         }
         
         // Only blank if we successfully fetched AND it's NOT "True"
         if (security_key === customer_security_key) {
             console.log("✅ YES - Website will run");
         } else {
-            console.log("❌ Blanking page!");
+            console.log("❌❌❌ BLANKING PAGE NOW! ❌❌❌");
             document.querySelector('body').innerHTML = '';
         }
         
     } catch (error) {
         console.error("❌ Error:", error);
-        // Keep site running on error
         console.log("⚠️ Error - Keeping site running");
     }
 }
