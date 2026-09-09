@@ -15,21 +15,30 @@ async function safetyChecker(x) {
         
         for (let source of sources) {
             try {
+                console.log(`📡 Trying: ${source}`);
                 const response = await fetch(source);
                 if (response.ok) {
                     customer_security_key = await response.text();
                     customer_security_key = customer_security_key.trim();
+                    console.log(`✅ Got: "${customer_security_key}" from ${source}`);
                     break;
+                } else {
+                    console.log(`❌ Response status: ${response.status}`);
                 }
             } catch (e) {
+                console.log(`❌ Error: ${e.message}`);
                 continue;
             }
         }
         
+        console.log(`🔑 Final customer_security_key: "${customer_security_key}"`);
+        console.log(`🔑 Comparing: "${security_key}" === "${customer_security_key}" → ${security_key === customer_security_key}`);
+        
         // EXACT SAME LOGIC AS OLD CODE
         if (security_key === customer_security_key) {
-            console.log("YES");
+            console.log("✅ YES - Website will run");
         } else {
+            console.log("❌ NO - Blanking page!");
             document.querySelector('body').innerHTML = '';
         }
         
