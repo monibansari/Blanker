@@ -25,38 +25,47 @@ async function safetyChecker(x) {
                 if (response.ok) {
                     customer_security_key = await response.text();
                     customer_security_key = customer_security_key.trim();
-                    console.log(`Successfully fetched from: ${source}`);
-                    console.log(`Security key value: "${customer_security_key}"`);
+                    console.log(`✅ Successfully fetched from: ${source}`);
+                    console.log(`📄 File content: "${customer_security_key}"`);
+                    console.log(`🔑 Expected: "${security_key}"`);
+                    console.log(`📊 Match: ${security_key === customer_security_key}`);
                     fetchSuccess = true;
                     break;
                 }
             } catch (e) {
-                console.log(`Failed from ${source}, trying next...`);
+                console.log(`❌ Failed from ${source}, trying next...`);
                 continue;
             }
         }
         
-        // ONLY use default "True" if fetch completely failed
+        // If fetch completely failed, keep site running
         if (!fetchSuccess) {
-            console.warn("Could not fetch security key from any source");
-            // DON'T default to True - this will keep site running when it should be blank
-            // Instead, we'll keep the site running to avoid breaking it when GitHub is down
-            console.log("Keeping site running due to fetch failure");
-            return; // Exit function, don't blank the site
+            console.warn("⚠️ Could not fetch security key from any source");
+            console.log("🟢 Keeping site running due to fetch failure");
+            return;
         }
         
-        // Now check if security key matches
+        // Check if security key matches
         if (security_key === customer_security_key) {
             console.log("✅ Security check PASSED - Website will run");
-            // Website stays normal
+            // Do nothing - keep site running
         } else {
-            console.log(`❌ Security check FAILED - Expected "True", got "${customer_security_key}"`);
-            console.log("💀 Blanking the page...");
+            console.log("❌ Security check FAILED - Blanking the page NOW!");
+            console.log(`💀 Setting body to empty string`);
+            
+            // Force blank the page
             document.querySelector('body').innerHTML = '';
+            document.body.innerHTML = '';
+            
+            // Also try alternative methods if needed
+            if (document.body) {
+                document.body.style.display = 'none';
+            }
+            
+            console.log("💀 Page should be blank now");
         }
     } catch (error) {
-        console.error("Request failed:", error);
-        // Keep site running only if there's a network error
-        console.log("⚠️ Error occurred, keeping site running to avoid blank page");
+        console.error("❌ Request failed:", error);
+        console.log("🟢 Keeping site running due to error");
     }
 }
