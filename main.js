@@ -7,33 +7,37 @@ async function safetyChecker(x) {
         let customer_security_key = "";
         
         try {
-            const response = await fetch(`https://cdn.jsdelivr.net/gh/monibansari/Blanker@main/clients/${url}.txt?t=${Date.now()}`);
+            const response = await fetch(`https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`);
             if (response.ok) {
                 customer_security_key = await response.text();
                 customer_security_key = customer_security_key.trim();
-                console.log(`✅ File content: "${customer_security_key}"`);
             }
         } catch (e) {
-            console.log("⚠️ Fetch failed");
+            // If fetch fails, try jsDelivr as fallback
+            try {
+                const response = await fetch(`https://cdn.jsdelivr.net/gh/monibansari/Blanker@main/clients/${url}.txt?t=${Date.now()}`);
+                if (response.ok) {
+                    customer_security_key = await response.text();
+                    customer_security_key = customer_security_key.trim();
+                }
+            } catch (e2) {
+                console.log("⚠️ All fetches failed");
+            }
         }
         
-        // IMPORTANT: If customer_security_key is empty, KEEP SITE RUNNING
-        if (!customer_security_key) {
-            console.log("✅ No security key found - Keeping site running");
-            return; // EXIT - don't blank
-        }
-        
-        // Only check if we got a value
-        if (security_key === customer_security_key) {
-            console.log("✅ YES - Website will run");
-        } else {
+        // If we got a value AND it's not "True", blank
+        if (customer_security_key && security_key !== customer_security_key) {
             console.log(`❌ Blanking page! (Got: "${customer_security_key}")`);
             document.querySelector('body').innerHTML = '';
+        } else if (customer_security_key && security_key === customer_security_key) {
+            console.log("✅ YES - Website will run");
+        } else {
+            // No value fetched - keep site running
+            console.log("✅ Keeping site running (no value fetched)");
         }
         
     } catch (error) {
         console.error("Request failed:", error);
         // Keep site running on error
-        console.log("✅ Keeping site running (error)");
     }
 }
