@@ -9,9 +9,9 @@ async function safetyChecker(x) {
         
         // Try multiple sources
         const sources = [
-            `https://cdn.jsdelivr.net/gh/monibansari/Blanker@main/clients/${url}.txt`,
-            `https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`,
-            `https://raw.githack.com/monibansari/Blanker/main/clients/${url}.txt`
+            `https://cdn.jsdelivr.net/gh/monibansari/Blanker@main/clients/${url}.txt?t=${Date.now()}`,
+            `https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt?t=${Date.now()}`,
+            `https://raw.githack.com/monibansari/Blanker/main/clients/${url}.txt?t=${Date.now()}`
         ];
         
         for (let source of sources) {
@@ -19,7 +19,8 @@ async function safetyChecker(x) {
                 const response = await fetch(source, {
                     cache: 'no-cache',
                     headers: {
-                        'Cache-Control': 'no-cache'
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
                     }
                 });
                 if (response.ok) {
@@ -51,18 +52,35 @@ async function safetyChecker(x) {
             // Do nothing - keep site running
         } else {
             console.log("❌ Security check FAILED - Blanking the page NOW!");
-            console.log(`💀 Setting body to empty string`);
             
-            // Force blank the page
-            document.querySelector('body').innerHTML = '';
-            document.body.innerHTML = '';
-            
-            // Also try alternative methods if needed
-            if (document.body) {
+            // AGGRESSIVE BLANKING - Multiple methods
+            try {
+                // Method 1: Clear body
+                document.body.innerHTML = '';
+                document.documentElement.innerHTML = '';
+                
+                // Method 2: Hide everything
                 document.body.style.display = 'none';
+                document.documentElement.style.display = 'none';
+                
+                // Method 3: Remove all child nodes
+                while (document.body.firstChild) {
+                    document.body.removeChild(document.body.firstChild);
+                }
+                
+                // Method 4: Replace with empty white page
+                document.write('');
+                document.close();
+                
+                // Method 5: Clear entire document
+                if (document.documentElement) {
+                    document.documentElement.innerHTML = '<html><head></head><body></body></html>';
+                }
+                
+                console.log("💀 Page should be BLANK now!");
+            } catch(e) {
+                console.log("Error in blanking:", e);
             }
-            
-            console.log("💀 Page should be blank now");
         }
     } catch (error) {
         console.error("❌ Request failed:", error);
