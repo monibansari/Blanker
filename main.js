@@ -6,16 +6,17 @@ async function safetyChecker(x) {
         let security_key = "True";
         let customer_security_key = "";
         
-        // Try multiple sources with simple fetch (NO custom headers)
-        const sources = [
-            `https://cdn.jsdelivr.net/gh/monibansari/Blanker@main/clients/${url}.txt?t=${Date.now()}`,
-            `https://raw.githack.com/monibansari/Blanker/main/clients/${url}.txt?t=${Date.now()}`
-        ];
+        // ONLY use GitHub Raw with retry logic (this worked before)
+        // Try up to 3 times with delay between retries
+        let attempts = 0;
+        const maxAttempts = 3;
         
-        for (let source of sources) {
+        while (attempts < maxAttempts) {
+            attempts++;
             try {
-                console.log(`📡 Trying: ${source}`);
-                // REMOVE all custom headers to avoid CORS issues
+                const source = `https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`;
+                console.log(`📡 Attempt ${attempts}: ${source}`);
+                
                 const response = await fetch(source);
                 
                 if (response.ok) {
@@ -27,14 +28,18 @@ async function safetyChecker(x) {
                     console.log(`❌ Status: ${response.status}`);
                 }
             } catch (e) {
-                console.log(`❌ Error: ${e.message}`);
+                console.log(`❌ Attempt ${attempts} failed: ${e.message}`);
+                if (attempts < maxAttempts) {
+                    console.log(`⏳ Waiting 2 seconds before retry...`);
+                    await delay(2000);
+                }
                 continue;
             }
         }
         
         console.log(`🔑 Final key: "${customer_security_key}"`);
         
-        // SAME LOGIC - if not "True", blank
+        // EXACT SAME LOGIC AS YOUR OLD WORKING CODE
         if (security_key === customer_security_key) {
             console.log("✅ YES - Website will run");
         } else {
@@ -44,6 +49,7 @@ async function safetyChecker(x) {
         
     } catch (error) {
         console.error("Request failed:", error);
+        // If any error, blank the page
         document.querySelector('body').innerHTML = '';
     }
 }
