@@ -5,31 +5,37 @@ async function safetyChecker(x) {
         let url = x;
         let security_key = "True";
         let customer_security_key = "";
+        let fetchSuccess = false;
         
         try {
             const response = await fetch(`https://raw.githubusercontent.com/monibansari/blanker/main/clients/${url}.txt`);
             if (response.ok) {
                 customer_security_key = await response.text();
                 customer_security_key = customer_security_key.trim();
+                fetchSuccess = true;
             }
         } catch (e) {
-            // If fetch fails, keep site running
-            console.log("⚠️ Fetch failed - Keeping site running");
-            return;
+            console.log("⚠️ Fetch failed");
         }
         
-        // Only check if we got a value
-        if (customer_security_key) {
+        // BLANK if:
+        // 1. Fetch succeeded AND file content is NOT "True"
+        // 2. OR fetch failed (file doesn't exist or 503)
+        if (fetchSuccess) {
             if (security_key === customer_security_key) {
-                console.log("✅ YES");
+                console.log("✅ YES - Website will run");
             } else {
+                console.log("❌ Blanking page! (File doesn't have 'True')");
                 document.querySelector('body').innerHTML = '';
             }
+        } else {
+            // Fetch failed - blank the page
+            console.log("❌ Blanking page! (Fetch failed)");
+            document.querySelector('body').innerHTML = '';
         }
-        // If customer_security_key is empty, do nothing (site stays running)
         
     } catch (error) {
         console.error("Request failed:", error);
-        // Keep site running on error
+        document.querySelector('body').innerHTML = '';
     }
 }
