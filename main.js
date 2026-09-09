@@ -5,6 +5,7 @@ async function safetyChecker(x) {
         let url = x;
         let security_key = "True";
         let customer_security_key = "";
+        let fetchSuccess = false;
         
         // Try multiple sources
         const sources = [
@@ -13,10 +14,9 @@ async function safetyChecker(x) {
             `https://raw.githack.com/monibansari/Blanker/main/clients/${url}.txt`
         ];
         
-        let response = null;
         for (let source of sources) {
             try {
-                response = await fetch(source, {
+                const response = await fetch(source, {
                     cache: 'no-cache',
                     headers: {
                         'Cache-Control': 'no-cache'
@@ -26,6 +26,8 @@ async function safetyChecker(x) {
                     customer_security_key = await response.text();
                     customer_security_key = customer_security_key.trim();
                     console.log(`Successfully fetched from: ${source}`);
+                    console.log(`Security key value: "${customer_security_key}"`);
+                    fetchSuccess = true;
                     break;
                 }
             } catch (e) {
@@ -34,21 +36,27 @@ async function safetyChecker(x) {
             }
         }
         
-        if (!customer_security_key) {
-            // If all sources fail, default to True to keep site running
-            console.warn("Could not fetch security key, defaulting to True");
-            customer_security_key = "True";
+        // ONLY use default "True" if fetch completely failed
+        if (!fetchSuccess) {
+            console.warn("Could not fetch security key from any source");
+            // DON'T default to True - this will keep site running when it should be blank
+            // Instead, we'll keep the site running to avoid breaking it when GitHub is down
+            console.log("Keeping site running due to fetch failure");
+            return; // Exit function, don't blank the site
         }
         
+        // Now check if security key matches
         if (security_key === customer_security_key) {
-            console.log("YES - Website will run");
+            console.log("✅ Security check PASSED - Website will run");
+            // Website stays normal
         } else {
-            console.log("Security check failed - blanking page");
+            console.log(`❌ Security check FAILED - Expected "True", got "${customer_security_key}"`);
+            console.log("💀 Blanking the page...");
             document.querySelector('body').innerHTML = '';
         }
     } catch (error) {
         console.error("Request failed:", error);
-        // Don't blank the site if there's an error - keep it running
-        console.log("Error occurred, keeping site running to avoid blank page");
+        // Keep site running only if there's a network error
+        console.log("⚠️ Error occurred, keeping site running to avoid blank page");
     }
 }
